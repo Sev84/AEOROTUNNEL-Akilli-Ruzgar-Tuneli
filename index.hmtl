@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="tr" style="scroll-behavior: smooth;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AeroTunnel - Akıllı Rüzgar Tüneli Portalı</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            color: #e5e7eb;
+            background-color: #111827;
+            overflow-x: hidden;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(45deg, #1f2937, #111827, #374151, #111827);
+            background-size: 400% 400%;
+            animation: wave 15s ease infinite;
+        }
+        @keyframes wave {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        @keyframes blink {
+            50% { opacity: 0.3; }
+        }
+        .blinking-dot { animation: blink 1.5s infinite; }
+        .panel {
+            background: rgba(17, 24, 39, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .nav-link {
+            cursor: pointer;
+            padding: 0.75rem 1.5rem;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .nav-link.active, .nav-link:hover {
+            color: #ef4444; /* red-500 */
+            border-bottom-color: #ef4444;
+        }
+
+        /* Airflow animation */
+        @keyframes airflow {
+            from { transform: translateX(-100px); }
+            to { transform: translateX(100%); }
+        }
+        .air-particle {
+            position: absolute;
+            width: 4px;
+            height: 2px;
+            background: rgba(156, 163, 175, 0.6);
+            border-radius: 50%;
+            animation: airflow 2s linear infinite;
+        }
+        section {
+            padding-top: 8rem; /* Offset for fixed header */
+            margin-top: -8rem; /* Negative margin to align correctly */
+        }
+    </style>
+</head>
+<body class="text-gray-200">
+
+    <!-- Header & Navigation -->
+    <header class="sticky top-0 z-50 panel w-full mb-6">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <!-- Logo Area -->
+                <div class="flex items-center gap-4">
+                    <!-- Sizin Logonuz İçin Yer Tutucu -->
+                    <img src="https://placehold.co/100x100/dc2626/white?text=LOGO" alt="Proje Logosu" class="h-12 w-12 rounded-full object-cover">
+                    <!-- Türk Bayrağı -->
+                    <svg class="w-12 h-8" viewBox="0 0 900 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M0 0H900V600H0V0Z" fill="#E30A17"/>
+                        <path d="M450 300C450 382.843 382.843 450 300 450C217.157 450 150 382.843 150 300C150 217.157 217.157 150 300 150C382.843 150 450 217.157 450 300Z" fill="#FFFFFF"/>
+                        <path d="M480 300C480 366.274 426.274 420 360 420C293.726 420 240 366.274 240 300C240 233.726 293.726 180 360 180C426.274 180 480 233.726 480 300Z" fill="#E30A17"/>
+                        <path d="M510 300L565.305 346.967L541.901 285.451L601.769 264.549L536.695 253.033L510 195L483.305 253.033L418.231 264.549L478.099 285.451L454.695 346.967L510 300Z" fill="#FFFFFF"/>
+                    </svg>
+                </div>
+                <!-- Navigation Links -->
+                <nav class="hidden md:flex items-center justify-center font-semibold text-gray-300">
+                    <a href="#dashboard" class="nav-link active">Kontrol Paneli</a>
+                    <a href="#aerodynamics" class="nav-link">Aerodinamik Nedir?</a>
+                    <a href="#about" class="nav-link">Proje Hakkında</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <main class="space-y-16">
+            <!-- Section 1: Dashboard -->
+            <section id="dashboard">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 flex flex-col gap-6">
+                        <!-- Control Panel -->
+                        <div class="panel p-4 rounded-xl shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div class="flex items-center gap-3">
+                                <div id="status-indicator" class="w-4 h-4 rounded-full bg-gray-500 transition-colors duration-300"></div>
+                                <span id="status-text" class="font-semibold text-lg text-white">Deney Durumu: Pasif</span>
+                            </div>
+                            <div class="flex gap-4">
+                                <button id="startButton" class="bg-red-700 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-lg transition-all duration-300 flex items-center gap-2 shadow-md border border-red-500">Başlat</button>
+                                <button id="stopButton" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg transition-all duration-300 flex items-center gap-2 shadow-md disabled:opacity-50" disabled>Durdur</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Infographic -->
+                        <div class="panel p-4 sm:p-6 rounded-xl shadow-lg">
+                            <h2 class="text-xl font-semibold text-white mb-4">Sistem Çalışma Prensibi</h2>
+                            <div class="relative w-full h-48 bg-gray-800/50 rounded-lg overflow-hidden">
+                                <div id="airflow-container" class="absolute inset-0"></div>
+                                <svg class="absolute inset-0 w-full h-full" viewBox="0 0 400 100" preserveAspectRatio="xMidYMid meet">
+                                    <path d="M0 10 L80 10 Q90 15, 100 20 L280 20 Q290 15, 300 10 L400 10 L400 90 L300 90 Q290 85, 280 80 L100 80 Q90 85, 80 90 L0 90 Z" fill="rgba(31, 41, 55, 0.5)" stroke="rgba(156, 163, 175, 0.5)" stroke-width="1"/>
+                                    <text x="40" y="55" font-family="Inter" font-size="10" fill="#9ca3af" text-anchor="middle">Fan</text>
+                                    <path d="M180 35 L220 35 L210 65 Z" fill="#dc2626" />
+                                    <text x="200" y="30" font-family="Inter" font-size="10" fill="#e5e7eb" text-anchor="middle">Test Modeli</text>
+                                    <rect x="230" y="60" width="40" height="15" fill="#1f2937" rx="2"/>
+                                    <text x="250" y="70" font-family="Inter" font-size="8" fill="#e5e7eb" text-anchor="middle">Sensörler</text>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Chart -->
+                        <div class="panel p-4 sm:p-6 rounded-xl shadow-lg">
+                            <h2 class="text-xl font-semibold text-white mb-4">Gerçek Zamanlı Veri Akışı</h2>
+                            <div class="relative h-64 sm:h-80">
+                                <canvas id="realTimeChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-1 flex flex-col gap-6">
+                        <!-- Live Data Cards -->
+                        <div class="panel p-4 sm:p-6 rounded-xl shadow-lg">
+                            <h2 class="text-xl font-semibold text-white mb-4">Anlık Sensör Verileri</h2>
+                            <div class="space-y-4">
+                                <div class="bg-gray-800/70 p-4 rounded-lg flex items-center gap-4 border-l-4 border-red-500">
+                                    <div class="bg-red-500/20 text-red-300 p-3 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg></div>
+                                    <div><p class="text-sm text-gray-400">Yük (Kuvvet) (HX711)</p><p id="loadValue" class="text-2xl font-bold text-white">--- g</p></div>
+                                </div>
+                                <div class="bg-gray-800/70 p-4 rounded-lg flex items-center gap-4 border-l-4 border-red-500">
+                                    <div class="bg-red-500/20 text-red-300 p-3 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.6 3.3a10 10 0 1 0 5.7 5.7"/><path d="M21.3 9a1 1 0 0 0-1.6-.8l-1.1 2-1.8-1.8-1.2-3.8-2.2 1.1-.5-1.6-3.8-1.2.4-3.5-2-1.1.9-2.5"/><path d="M12 12a1 1 0 0 0 1 1h.5a.5.5 0 0 1 0 1H12a2 2 0 1 1 0-4h4.5a.5.5 0 0 0 0-1H12a1 1 0 0 0 0 2z"/></svg></div>
+                                    <div><p class="text-sm text-gray-400">Basınç (BMP180)</p><p id="pressureValue" class="text-2xl font-bold text-white">--- hPa</p></div>
+                                </div>
+                                <div class="bg-gray-800/70 p-4 rounded-lg flex items-center gap-4 border-l-4 border-gray-500">
+                                     <div class="bg-gray-500/20 text-gray-300 p-3 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg></div>
+                                    <div><p class="text-sm text-gray-400">Sıcaklık (DS18B20/BMP180)</p><p id="temperatureValue" class="text-2xl font-bold text-white">-- °C</p></div>
+                                </div>
+                                <div class="bg-gray-800/70 p-4 rounded-lg flex items-center gap-4 border-l-4 border-gray-500">
+                                    <div class="bg-gray-500/20 text-gray-300 p-3 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></svg></div>
+                                    <div><p class="text-sm text-gray-400">Hava Hızı (Anemometre)</p><p id="speedValue" class="text-2xl font-bold text-white">--- m/s</p></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 2: Aerodynamics Info -->
+            <section id="aerodynamics">
+                <div class="panel p-6 sm:p-8 rounded-xl">
+                    <h2 class="text-2xl sm:text-3xl font-bold text-white mb-6 text-center">Aerodinamiğin Temel Kuvvetleri</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="bg-gray-800/70 p-6 rounded-lg text-center border-t-4 border-red-500">
+                            <svg class="w-16 h-16 mx-auto mb-4 text-red-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 22V7l-5-4-5 4v15h10Z"/><path d="M12 12H2l10-10 10 10h-10Z"/></svg>
+                            <h3 class="text-xl font-semibold mb-2 text-white">Kaldırma Kuvveti (Lift)</h3>
+                            <p class="text-gray-400">Bir cismin alt ve üst yüzeyleri arasındaki basınç farkından doğan ve cismi yukarı doğru iten kuvvettir.</p>
+                        </div>
+                        <div class="bg-gray-800/70 p-6 rounded-lg text-center border-t-4 border-red-500">
+                            <svg class="w-16 h-16 mx-auto mb-4 text-red-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></svg>
+                            <h3 class="text-xl font-semibold mb-2 text-white">Sürükleme Kuvveti (Drag)</h3>
+                            <p class="text-gray-400">Hava gibi bir akışkanın, içindeki bir cismin hareketine karşı gösterdiği dirençtir. Hareketi yavaşlatır.</p>
+                        </div>
+                        <div class="bg-gray-800/70 p-6 rounded-lg text-center border-t-4 border-red-500">
+                            <svg class="w-16 h-16 mx-auto mb-4 text-red-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 12H3"/><path d="M15 6v12l6-6-6-6Z"/></svg>
+                            <h3 class="text-xl font-semibold mb-2 text-white">İtki Kuvveti (Thrust)</h3>
+                            <p class="text-gray-400">Bir cismi ileri doğru hareket ettiren kuvvettir. Uçaklarda motorlar tarafından üretilir ve sürükleme kuvvetini yener.</p>
+                        </div>
+                        <div class="bg-gray-800/70 p-6 rounded-lg text-center border-t-4 border-red-500">
+                            <svg class="w-16 h-16 mx-auto mb-4 text-red-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V8"/><path d="M5 15H3.26a1 1 0 0 0-1 1.26l1.21 4.24a1 1 0 0 0 .97.7h15.12a1 1 0 0 0 .97-.7l1.21-4.24a1 1 0 0 0-1-1.26H19"/><path d="M12 8a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v1h12V8a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2Z"/></svg>
+                            <h3 class="text-xl font-semibold mb-2 text-white">Ağırlık (Weight)</h3>
+                            <p class="text-gray-400">Yerçekiminin cisme uyguladığı kuvvettir. Her zaman gezegenin merkezine doğrudur ve kaldırma kuvveti tarafından dengelenir.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 3: About -->
+            <section id="about">
+                 <div class="panel p-6 sm:p-8 rounded-xl text-center">
+                    <h2 class="text-2xl sm:text-3xl font-bold text-white mb-4">Proje: AeroTunnel</h2>
+                    <p class="text-lg text-gray-300 max-w-3xl mx-auto mb-6">
+                        Bu proje, **STARS OF FUTURE** takımı tarafından **TEKNOFEST Eğitim Teknolojileri Yarışması** için geliştirilmiştir. Amacımız, aerodinamik bilimini; pahalı ve erişilemez laboratuvarlardan çıkarıp, her öğrencinin masasına sığdırabilecek, düşük maliyetli, taşınabilir ve akıllı bir rüzgar tüneli ile herkese ulaştırmaktır.
+                    </p>
+                    <h3 class="text-xl font-semibold text-white mb-4">Kullanılan Teknolojiler</h3>
+                    <div class="flex flex-wrap justify-center items-center gap-6">
+                        <span class="bg-red-700 text-white px-4 py-2 rounded-full font-semibold">Deneyap Kart</span>
+                        <span class="bg-gray-700 text-white px-4 py-2 rounded-full font-semibold">HX711 Yük Hücresi</span>
+                        <span class="bg-gray-700 text-white px-4 py-2 rounded-full font-semibold">BMP180 Basınç Sensörü</span>
+                        <span class="bg-gray-700 text-white px-4 py-2 rounded-full font-semibold">Python & Chart.js</span>
+                    </div>
+                 </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- SCROLL-BASED NAVIGATION ---
+            const sections = document.querySelectorAll('section');
+            const navLinks = document.querySelectorAll('.nav-link');
+
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.5 // Section is 50% in view
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(link => {
+                            link.classList.remove('active');
+                            if (link.getAttribute('href').substring(1) === entry.target.id) {
+                                link.classList.add('active');
+                            }
+                        });
+                    }
+                });
+            }, observerOptions);
+
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+
+            // --- DASHBOARD LOGIC ---
+            const startButton = document.getElementById('startButton');
+            const stopButton = document.getElementById('stopButton');
+            const statusIndicator = document.getElementById('status-indicator');
+            const statusText = document.getElementById('status-text');
+            const loadValue = document.getElementById('loadValue');
+            const pressureValue = document.getElementById('pressureValue');
+            const temperatureValue = document.getElementById('temperatureValue');
+            const speedValue = document.getElementById('speedValue');
+            const ctx = document.getElementById('realTimeChart').getContext('2d');
+            const airflowContainer = document.getElementById('airflow-container');
+
+            let dataInterval;
+            const MAX_DATA_POINTS = 20;
+
+            const realTimeChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        { label: 'Yük (g)', data: [], borderColor: 'rgb(239, 68, 68)', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderWidth: 2, tension: 0.4, fill: true, yAxisID: 'y' },
+                        { label: 'Basınç (hPa)', data: [], borderColor: 'rgb(220, 38, 38)', backgroundColor: 'rgba(220, 38, 38, 0.2)', borderWidth: 2, tension: 0.4, fill: true, yAxisID: 'y1' },
+                        { label: 'Sıcaklık (°C)', data: [], borderColor: 'rgb(156, 163, 175)', backgroundColor: 'rgba(156, 163, 175, 0.1)', borderWidth: 2, tension: 0.4, fill: false, yAxisID: 'y2' },
+                        { label: 'Hız (m/s)', data: [], borderColor: 'rgb(229, 231, 235)', backgroundColor: 'rgba(229, 231, 235, 0.1)', borderWidth: 2, tension: 0.4, fill: false, yAxisID: 'y3' }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { color: '#9ca3af' }, grid: { color: 'rgba(156, 163, 175, 0.1)' } },
+                        y: { type: 'linear', display: true, position: 'left', ticks: { color: '#ef4444' }, grid: { color: 'rgba(156, 163, 175, 0.2)' }, title: { display: true, text: 'Yük (g)', color: '#ef4444'} },
+                        y1: { type: 'linear', display: true, position: 'right', ticks: { color: '#9ca3af' }, grid: { drawOnChartArea: false }, title: { display: true, text: 'Basınç (hPa)', color: '#9ca3af'} },
+                        y2: { type: 'linear', display: true, position: 'right', ticks: { color: '#9ca3af' }, grid: { drawOnChartArea: false }, title: { display: true, text: 'Sıcaklık (°C)', color: '#9ca3af'} },
+                        y3: { type: 'linear', display: true, position: 'right', ticks: { color: '#9ca3af' }, grid: { drawOnChartArea: false }, title: { display: true, text: 'Hız (m/s)', color: '#9ca3af'} }
+                    },
+                    plugins: { legend: { labels: { color: '#d1d5db' } }, tooltip: { enabled: true, mode: 'index', intersect: false } },
+                    interaction: { mode: 'index', intersect: false }
+                }
+            });
+
+            function simulateData() {
+                const l = 35 + (Math.random() - 0.5) * 15;
+                const p = 1013 + (Math.random() - 0.5) * 5;
+                const t = 24 + (Math.random() - 0.5) * 1.5;
+                const s = 15 + (Math.random() - 0.5) * 2;
+                return { load: l.toFixed(2), pressure: p.toFixed(2), temperature: t.toFixed(2), speed: s.toFixed(2) };
+            }
+
+            function updateUI() {
+                const data = simulateData();
+                const now = new Date();
+                const timestamp = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                loadValue.textContent = `${data.load} g`;
+                pressureValue.textContent = `${data.pressure} hPa`;
+                temperatureValue.textContent = `${data.temperature} °C`;
+                speedValue.textContent = `${data.speed} m/s`;
+                if (realTimeChart.data.labels.length > MAX_DATA_POINTS) {
+                    realTimeChart.data.labels.shift();
+                    realTimeChart.data.datasets.forEach(dataset => { dataset.data.shift(); });
+                }
+                realTimeChart.data.labels.push(timestamp);
+                realTimeChart.data.datasets[0].data.push(data.load);
+                realTimeChart.data.datasets[1].data.push(data.pressure);
+                realTimeChart.data.datasets[2].data.push(data.temperature);
+                realTimeChart.data.datasets[3].data.push(data.speed);
+                realTimeChart.update('none');
+            }
+            
+            function manageAirflow(start) {
+                if (start) {
+                    for (let i = 0; i < 30; i++) {
+                        const particle = document.createElement('div');
+                        particle.className = 'air-particle';
+                        particle.style.top = `${Math.random() * 100}%`;
+                        particle.style.animationDelay = `${Math.random() * 2}s`;
+                        airflowContainer.appendChild(particle);
+                    }
+                } else {
+                    airflowContainer.innerHTML = '';
+                }
+            }
+
+            startButton.addEventListener('click', () => {
+                if (dataInterval) return;
+                startButton.disabled = true;
+                stopButton.disabled = false;
+                statusIndicator.classList.remove('bg-gray-500');
+                statusIndicator.classList.add('bg-red-500', 'blinking-dot');
+                statusText.textContent = 'Deney Durumu: Aktif';
+                manageAirflow(true);
+                updateUI();
+                dataInterval = setInterval(updateUI, 2000);
+            });
+
+            stopButton.addEventListener('click', () => {
+                if (!dataInterval) return;
+                clearInterval(dataInterval);
+                dataInterval = null;
+                startButton.disabled = false;
+                stopButton.disabled = true;
+                statusIndicator.classList.remove('bg-red-500', 'blinking-dot');
+                statusIndicator.classList.add('bg-gray-500');
+                statusText.textContent = 'Deney Durumu: Pasif';
+                manageAirflow(false);
+            });
+        });
+    </script>
+
+</body>
+</html>

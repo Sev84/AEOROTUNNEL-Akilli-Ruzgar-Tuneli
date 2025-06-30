@@ -55,7 +55,7 @@
         }
         .nav-link {
             cursor: pointer;
-            padding: 0.75rem 1.5rem;
+            padding: 0.5rem 1rem;
             border-bottom: 3px solid transparent;
             transition: all 0.3s ease;
         }
@@ -78,8 +78,21 @@
             animation: airflow 2s linear infinite;
         }
         section {
-            padding-top: 8rem; /* Offset for fixed header */
-            margin-top: -8rem; /* Negative margin to align correctly */
+            padding-top: 7rem; /* Offset for fixed header */
+            margin-top: -7rem; /* Negative margin to align correctly */
+        }
+        .terminal {
+            background-color: #000;
+            color: #00ff41;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            height: 200px;
+            overflow-y: scroll;
+            border: 1px solid #333;
+        }
+        .terminal-line::before {
+            content: '> ';
         }
     </style>
 </head>
@@ -91,16 +104,13 @@
             <div class="flex items-center justify-between h-20">
                 <!-- Logo & Title Area -->
                 <div class="flex items-center gap-4">
-                    <!-- Sizin Logonuz -->
                     <img src="logo11111.png" alt="Proje Logosu" class="h-12 w-12 rounded-full object-cover">
-                    <!-- Türk Bayrağı -->
                     <svg class="w-12 h-8 hidden sm:block" viewBox="0 0 900 600" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M0 0H900V600H0V0Z" fill="#E30A17"/>
                         <path d="M450 300C450 382.843 382.843 450 300 450C217.157 450 150 382.843 150 300C150 217.157 217.157 150 300 150C382.843 150 450 217.157 450 300Z" fill="#FFFFFF"/>
                         <path d="M480 300C480 366.274 426.274 420 360 420C293.726 420 240 366.274 240 300C240 233.726 293.726 180 360 180C426.274 180 480 233.726 480 300Z" fill="#E30A17"/>
                         <path d="M510 300L565.305 346.967L541.901 285.451L601.769 264.549L536.695 253.033L510 195L483.305 253.033L418.231 264.549L478.099 285.451L454.695 346.967L510 300Z" fill="#FFFFFF"/>
                     </svg>
-                     <!-- Proje İsmi -->
                     <div>
                         <h1 class="text-lg sm:text-xl font-bold text-white">AEROTUNNEL</h1>
                         <p class="text-xs sm:text-sm text-gray-400">Akıllı Rüzgar Tüneli Kontrol Paneli</p>
@@ -110,6 +120,7 @@
                 <nav class="hidden md:flex items-center justify-center font-semibold text-gray-300">
                     <a href="#dashboard" class="nav-link active">Kontrol Paneli</a>
                     <a href="#aerodynamics" class="nav-link">Aerodinamik Nedir?</a>
+                    <a href="#terminal" class="nav-link">Veri Terminali</a>
                     <a href="#about" class="nav-link">Proje Hakkında</a>
                 </nav>
             </div>
@@ -157,6 +168,20 @@
                                 <canvas id="realTimeChart"></canvas>
                             </div>
                         </div>
+                        
+                        <!-- AI Analysis Result -->
+                        <div id="ai-analysis-panel" class="panel p-4 sm:p-6 rounded-xl shadow-lg hidden">
+                            <h2 class="text-xl font-semibold text-white mb-4">Yapay Zeka Analizi</h2>
+                            <div id="ai-result-content" class="flex items-center gap-4">
+                                <!-- Icon will be inserted here by JS -->
+                                <div id="ai-icon-container"></div>
+                                <div>
+                                    <p id="ai-result-text" class="text-lg font-semibold"></p>
+                                    <p id="ai-result-reason" class="text-gray-400"></p>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                     <div class="lg:col-span-1 flex flex-col gap-6">
                         <!-- Live Data Cards -->
@@ -213,13 +238,23 @@
                     </div>
                 </div>
             </section>
+            
+            <!-- Section 4: Terminal -->
+            <section id="terminal">
+                <div class="panel p-6 sm:p-8 rounded-xl">
+                    <h2 class="text-2xl sm:text-3xl font-bold text-white mb-6 text-center">Canlı Veri Terminali</h2>
+                    <div id="terminal-output" class="terminal">
+                        <div class="terminal-line">Terminal bekliyor... Deneyi başlatın.</div>
+                    </div>
+                </div>
+            </section>
 
-            <!-- Section 3: About -->
+            <!-- Section 5: About -->
             <section id="about">
                  <div class="panel p-6 sm:p-8 rounded-xl text-center">
                     <h2 class="text-2xl sm:text-3xl font-bold text-white mb-4">Proje: AeroTunnel</h2>
                     <p class="text-lg text-gray-300 max-w-3xl mx-auto mb-6">
-                        Bu proje, *STARS OF FUTURE* takımı tarafından *TEKNOFEST Eğitim Teknolojileri Yarışması* için geliştirilmiştir. Amacımız, aerodinamik bilimini; pahalı ve erişilemez laboratuvarlardan çıkarıp, her öğrencinin masasına sığdırabilecek, düşük maliyetli, taşınabilir ve akıllı bir rüzgar tüneli ile herkese ulaştırmaktır.
+                        Bu proje, **STARS OF FUTURE** takımı tarafından **TEKNOFEST Eğitim Teknolojileri Yarışması** için geliştirilmiştir. Amacımız, aerodinamik bilimini; pahalı ve erişilemez laboratuvarlardan çıkarıp, her öğrencinin masasına sığdırabilecek, düşük maliyetli, taşınabilir ve akıllı bir rüzgar tüneli ile herkese ulaştırmaktır.
                     </p>
                     <h3 class="text-xl font-semibold text-white mb-4">Kullanılan Teknolojiler</h3>
                     <div class="flex flex-wrap justify-center items-center gap-6">
@@ -236,10 +271,8 @@
     <!-- Music Control Button -->
     <div id="music-control" class="fixed bottom-6 right-6 z-50">
         <button id="muteButton" class="w-14 h-14 bg-red-700/80 hover:bg-red-600 rounded-full flex items-center justify-center text-white shadow-lg transition-transform hover:scale-110">
-            <!-- Mute Icon -->
-            <svg id="icon-muted" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-volume-x"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" x2="17" y1="9" y2="15"/><line x1="17" x2="23" y1="9" y2="15"/></svg>
-            <!-- Unmuted Icon (hidden by default) -->
-            <svg id="icon-unmuted" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-volume-2 hidden"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+            <svg id="icon-muted" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" x2="17" y1="9" y2="15"/><line x1="17" x2="23" y1="9" y2="15"/></svg>
+            <svg id="icon-unmuted" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
         </button>
     </div>
 
@@ -248,14 +281,7 @@
             // --- SCROLL-BASED NAVIGATION ---
             const sections = document.querySelectorAll('section');
             const navLinks = document.querySelectorAll('.nav-link');
-
-            const observerOptions = {
-                root: null,
-                rootMargin: '0px',
-                threshold: 0.5 // Section is 50% in view
-            };
-
-            const observer = new IntersectionObserver((entries, observer) => {
+            const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
                         navLinks.forEach(link => {
@@ -266,11 +292,8 @@
                         });
                     }
                 });
-            }, observerOptions);
-
-            sections.forEach(section => {
-                observer.observe(section);
-            });
+            }, { rootMargin: '0px', threshold: 0.5 });
+            sections.forEach(section => observer.observe(section));
 
             // --- DASHBOARD LOGIC ---
             const startButton = document.getElementById('startButton');
@@ -283,9 +306,15 @@
             const speedValue = document.getElementById('speedValue');
             const ctx = document.getElementById('realTimeChart').getContext('2d');
             const airflowContainer = document.getElementById('airflow-container');
+            const aiPanel = document.getElementById('ai-analysis-panel');
+            const aiIconContainer = document.getElementById('ai-icon-container');
+            const aiResultText = document.getElementById('ai-result-text');
+            const aiResultReason = document.getElementById('ai-result-reason');
+            const terminalOutput = document.getElementById('terminal-output');
 
             let dataInterval;
             const MAX_DATA_POINTS = 20;
+            let collectedLoadData = [];
 
             const realTimeChart = new Chart(ctx, {
                 type: 'line',
@@ -317,51 +346,84 @@
                 const p = 1013 + (Math.random() - 0.5) * 5;
                 const t = 24 + (Math.random() - 0.5) * 1.5;
                 const s = 15 + (Math.random() - 0.5) * 2;
-                return { load: l.toFixed(2), pressure: p.toFixed(2), temperature: t.toFixed(2), speed: s.toFixed(2) };
+                return { load: l, pressure: p, temperature: t, speed: s };
             }
 
             function updateUI() {
                 const data = simulateData();
                 const now = new Date();
                 const timestamp = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                loadValue.textContent = `${data.load} g`;
-                pressureValue.textContent = `${data.pressure} hPa`;
-                temperatureValue.textContent = `${data.temperature} °C`;
-                speedValue.textContent = `${data.speed} m/s`;
+
+                loadValue.textContent = `${data.load.toFixed(2)} g`;
+                pressureValue.textContent = `${data.pressure.toFixed(2)} hPa`;
+                temperatureValue.textContent = `${data.temperature.toFixed(2)} °C`;
+                speedValue.textContent = `${data.speed.toFixed(2)} m/s`;
+                
+                collectedLoadData.push(data.load);
+
                 if (realTimeChart.data.labels.length > MAX_DATA_POINTS) {
                     realTimeChart.data.labels.shift();
                     realTimeChart.data.datasets.forEach(dataset => { dataset.data.shift(); });
                 }
                 realTimeChart.data.labels.push(timestamp);
-                realTimeChart.data.datasets[0].data.push(data.load);
-                realTimeChart.data.datasets[1].data.push(data.pressure);
-                realTimeChart.data.datasets[2].data.push(data.temperature);
-                realTimeChart.data.datasets[3].data.push(data.speed);
+                realTimeChart.data.datasets[0].data.push(data.load.toFixed(2));
+                realTimeChart.data.datasets[1].data.push(data.pressure.toFixed(2));
+                realTimeChart.data.datasets[2].data.push(data.temperature.toFixed(2));
+                realTimeChart.data.datasets[3].data.push(data.speed.toFixed(2));
                 realTimeChart.update('none');
+                
+                // Update terminal
+                const terminalLine = document.createElement('div');
+                terminalLine.className = 'terminal-line';
+                terminalLine.textContent = `[HX711: ${data.load.toFixed(2)}g] [BMP180: ${data.pressure.toFixed(2)}hPa] [SPEED: ${data.speed.toFixed(2)}m/s]`;
+                terminalOutput.appendChild(terminalLine);
+                terminalOutput.scrollTop = terminalOutput.scrollHeight;
             }
             
-            function manageAirflow(start) {
-                if (start) {
-                    for (let i = 0; i < 30; i++) {
-                        const particle = document.createElement('div');
-                        particle.className = 'air-particle';
-                        particle.style.top = `${Math.random() * 100}%`;
-                        particle.style.animationDelay = `${Math.random() * 2}s`;
-                        airflowContainer.appendChild(particle);
+            function runAiAnalysis() {
+                aiPanel.classList.remove('hidden');
+                aiIconContainer.innerHTML = `<svg class="w-8 h-8 text-blue-400 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+                aiResultText.textContent = 'Analiz ediliyor...';
+                aiResultReason.textContent = 'Yapay zeka, toplanan verileri değerlendiriyor.';
+
+                setTimeout(() => {
+                    const averageLoad = collectedLoadData.reduce((a, b) => a + b, 0) / collectedLoadData.length;
+                    
+                    if (averageLoad < 35) {
+                        aiPanel.classList.remove('border-yellow-500');
+                        aiPanel.classList.add('border-green-500');
+                        aiIconContainer.innerHTML = `<svg class="w-8 h-8 text-green-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`;
+                        aiResultText.textContent = 'Aerodinamik Olarak Verimli';
+                        aiResultText.classList.remove('text-yellow-400');
+                        aiResultText.classList.add('text-green-400');
+                        aiResultReason.textContent = `Ortalama ${averageLoad.toFixed(2)}g sürüklenme kuvveti ile düşük direnç tespit edildi.`;
+                    } else {
+                        aiPanel.classList.remove('border-green-500');
+                        aiPanel.classList.add('border-yellow-500');
+                        aiIconContainer.innerHTML = `<svg class="w-8 h-8 text-yellow-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>`;
+                        aiResultText.textContent = 'Daha Fazla Geliştirme Gerekli';
+                        aiResultText.classList.remove('text-green-400');
+                        aiResultText.classList.add('text-yellow-400');
+                        aiResultReason.textContent = `Ortalama ${averageLoad.toFixed(2)}g sürüklenme kuvveti ile yüksek direnç tespit edildi.`;
                     }
-                } else {
-                    airflowContainer.innerHTML = '';
-                }
+                }, 2500);
+            }
+
+            function manageAirflow(start) {
+                airflowContainer.innerHTML = start ? Array.from({length: 30}).map(() => `<div class="air-particle" style="top:${Math.random()*100}%; animation-delay:${Math.random()*2}s;"></div>`).join('') : '';
             }
 
             startButton.addEventListener('click', () => {
                 if (dataInterval) return;
                 startButton.disabled = true;
                 stopButton.disabled = false;
-                statusIndicator.classList.remove('bg-gray-500');
-                statusIndicator.classList.add('bg-red-500', 'blinking-dot');
+                statusIndicator.classList.replace('bg-gray-500', 'bg-red-500');
+                statusIndicator.classList.add('blinking-dot');
                 statusText.textContent = 'Deney Durumu: Aktif';
                 manageAirflow(true);
+                aiPanel.classList.add('hidden');
+                collectedLoadData = [];
+                terminalOutput.innerHTML = '<div class="terminal-line">Veri akışı başlatıldı...</div>';
                 updateUI();
                 dataInterval = setInterval(updateUI, 2000);
             });
@@ -372,10 +434,16 @@
                 dataInterval = null;
                 startButton.disabled = false;
                 stopButton.disabled = true;
-                statusIndicator.classList.remove('bg-red-500', 'blinking-dot');
-                statusIndicator.classList.add('bg-gray-500');
+                statusIndicator.classList.replace('bg-red-500', 'bg-gray-500');
+                statusIndicator.classList.remove('blinking-dot');
                 statusText.textContent = 'Deney Durumu: Pasif';
                 manageAirflow(false);
+                runAiAnalysis();
+                const terminalLine = document.createElement('div');
+                terminalLine.className = 'terminal-line';
+                terminalLine.textContent = 'Veri akışı durduruldu. Analiz başlıyor...';
+                terminalOutput.appendChild(terminalLine);
+                terminalOutput.scrollTop = terminalOutput.scrollHeight;
             });
 
             // --- MUSIC LOGIC ---
@@ -385,39 +453,19 @@
             let isMuted = true;
             let musicInitialized = false;
 
-            // Create a synth
-            const synth = new Tone.FMSynth({
-                harmonicity: 3.01,
-                modulationIndex: 14,
-                envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 1 },
-                modulation: { type: "triangle" },
-                modulationEnvelope: { attack: 0.01, decay: 0.5, sustain: 0.2, release: 0.1 }
-            }).toDestination();
-
-            // Create a looping sequence
-            const sequence = new Tone.Sequence((time, note) => {
-                synth.triggerAttackRelease(note, "8n", time);
-            }, ["C4", "E4", "G4", "B4", "C5", "B4", "G4", "E4"], "4n");
-
-            // Set initial state
+            const synth = new Tone.FMSynth({ harmonicity: 3.01, modulationIndex: 14, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 1 }, modulation: { type: "triangle" }, modulationEnvelope: { attack: 0.01, decay: 0.5, sustain: 0.2, release: 0.1 } }).toDestination();
+            const sequence = new Tone.Sequence((time, note) => { synth.triggerAttackRelease(note, "8n", time); }, ["C4", "E4", "G4", "B4", "C5", "B4", "G4", "E4"], "4n");
             Tone.Destination.mute = isMuted;
 
             muteButton.addEventListener('click', async () => {
-                // Start audio context on first user interaction
                 if (!musicInitialized) {
                     await Tone.start();
-                    // Start the transport and the sequence
                     Tone.Transport.start();
                     sequence.start(0);
                     musicInitialized = true;
-                    console.log("Ses motoru başlatıldı.");
                 }
-
-                // Toggle mute state
                 isMuted = !isMuted;
                 Tone.Destination.mute = isMuted;
-
-                // Update icon
                 iconMuted.classList.toggle('hidden', !isMuted);
                 iconUnmuted.classList.toggle('hidden', isMuted);
             });

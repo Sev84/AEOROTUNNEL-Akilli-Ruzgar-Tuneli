@@ -17,6 +17,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 
+    <!-- Tone.js (Arka Plan Müziği ve Ses Efektleri için) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
     <!-- Google Fonts: Inter (Yazı Tipi için) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -55,11 +58,13 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        .nav-link {
+        .nav-link, .interactive-button {
             cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .nav-link {
             padding: 0.5rem 1rem;
             border-bottom: 3px solid transparent;
-            transition: all 0.3s ease;
         }
         .nav-link.active, .nav-link:hover {
             color: #ef4444; /* red-500 */
@@ -99,12 +104,6 @@
     </style>
 </head>
 <body class="text-gray-200">
-    
-    <!-- Arka Plan Müziği Elemanı -->
-    <audio id="background-music" loop autoplay>
-        <source src="teknofest-muzik.mp3" type="audio/mpeg">
-        Tarayıcınız ses elemanını desteklemiyor.
-    </audio>
 
     <!-- Header & Navigation -->
     <header class="sticky top-0 z-50 panel w-full">
@@ -148,8 +147,8 @@
                                 <span id="status-text" class="font-semibold text-lg text-white">Deney Durumu: Pasif</span>
                             </div>
                             <div class="flex gap-4">
-                                <button id="startButton" class="bg-red-700 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-lg transition-all duration-300 flex items-center gap-2 shadow-md border border-red-500">Başlat</button>
-                                <button id="stopButton" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg transition-all duration-300 flex items-center gap-2 shadow-md disabled:opacity-50" disabled>Durdur</button>
+                                <button id="startButton" class="interactive-button bg-red-700 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-lg flex items-center gap-2 shadow-md border border-red-500">Başlat</button>
+                                <button id="stopButton" class="interactive-button bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg flex items-center gap-2 shadow-md disabled:opacity-50" disabled>Durdur</button>
                             </div>
                         </div>
                         
@@ -188,7 +187,7 @@
                                         <p id="ai-result-reason" class="text-gray-400"></p>
                                     </div>
                                 </div>
-                                <button id="downloadCsvButton" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300 flex items-center gap-2 shadow-md">
+                                <button id="downloadCsvButton" class="interactive-button bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 shadow-md">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
                                     Verileri İndir (.csv)
                                 </button>
@@ -291,6 +290,52 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // --- SOUND ENGINE ---
+            let soundInitialized = false;
+            let isMuted = false;
+
+            // Sound Effects Synths
+            const hoverSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0, release: 0.1 }, volume: -20 }).toDestination();
+            const clickSound = new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.005, decay: 0.2, sustain: 0, release: 0.2 }, volume: -15 }).toDestination();
+            const startSound = new Tone.FMSynth({ harmonicity: 1.5, modulationIndex: 5, envelope: { attack: 0.01, decay: 0.3, sustain: 0.1, release: 0.5 }, volume: -10 }).toDestination();
+            const stopSound = new Tone.MembraneSynth({ pitchDecay: 0.1, octaves: 2, envelope: { attack: 0.01, decay: 0.5, sustain: 0, release: 0.5 }, volume: -10 }).toDestination();
+            
+            // Background Music Player
+            const backgroundMusic = new Tone.Player({
+                url: "teknofest-muzik.mp3",
+                loop: true,
+                autostart: true,
+                volume: -18
+            }).toDestination();
+
+            async function initializeAudio() {
+                if (soundInitialized) return;
+                try {
+                    await Tone.start();
+                    console.log("Ses motoru kullanıcı etkileşimi ile başlatıldı.");
+                    soundInitialized = true;
+                    if (Tone.Destination.mute) {
+                        Tone.Destination.mute = false;
+                        isMuted = false;
+                        updateMuteButton();
+                    }
+                } catch (e) {
+                    console.error("Ses motoru başlatılamadı:", e);
+                }
+            }
+            
+            // --- UI SOUNDS ---
+            const interactiveElements = document.querySelectorAll('.nav-link, .interactive-button');
+            interactiveElements.forEach(elem => {
+                elem.addEventListener('mouseenter', () => {
+                    if (!isMuted && soundInitialized) hoverSound.triggerAttackRelease('C6', '32n');
+                });
+                elem.addEventListener('click', () => {
+                    if (!isMuted && soundInitialized) clickSound.triggerAttackRelease('C5', '16n');
+                });
+            });
+
+
             // --- SCROLL-BASED NAVIGATION ---
             const sections = document.querySelectorAll('section');
             const navLinks = document.querySelectorAll('.nav-link');
@@ -445,6 +490,7 @@
 
             startButton.addEventListener('click', () => {
                 if (dataInterval) return;
+                if (!isMuted && soundInitialized) startSound.triggerAttackRelease('C3', '0.5');
                 startButton.disabled = true;
                 stopButton.disabled = false;
                 statusIndicator.classList.replace('bg-gray-500', 'bg-red-500');
@@ -460,6 +506,7 @@
 
             stopButton.addEventListener('click', () => {
                 if (!dataInterval) return;
+                if (!isMuted && soundInitialized) stopSound.triggerAttackRelease('C2', '0.5');
                 clearInterval(dataInterval);
                 dataInterval = null;
                 startButton.disabled = false;
@@ -478,38 +525,27 @@
             
             downloadCsvButton.addEventListener('click', downloadCSV);
 
-            // --- MUSIC LOGIC ---
+            // --- MUSIC & SOUND CONTROL ---
             const musicButton = document.getElementById('musicButton');
-            const music = document.getElementById('background-music');
             const iconMuted = document.getElementById('icon-muted');
             const iconUnmuted = document.getElementById('icon-unmuted');
             
-            // Try to autoplay music
-            let playPromise = music.play();
-            if (playPromise !== undefined) {
-                playPromise.then(_ => {
-                    // Autoplay started!
-                    iconMuted.classList.add('hidden');
-                    iconUnmuted.classList.remove('hidden');
-                }).catch(error => {
-                    // Autoplay was prevented.
-                    console.log("Otomatik müzik başlatma tarayıcı tarafından engellendi. Kullanıcı etkileşimi bekleniyor.");
-                    music.muted = true; // Start muted if autoplay fails
-                    iconMuted.classList.remove('hidden');
-                    iconUnmuted.classList.add('hidden');
-                });
+            function updateMuteButton() {
+                Tone.Destination.mute = isMuted;
+                iconMuted.classList.toggle('hidden', !isMuted);
+                iconUnmuted.classList.toggle('hidden', isMuted);
             }
 
+            // Initial state is unmuted but audio context needs to be started by user
+            updateMuteButton();
+
+            // Add a global click listener to start audio on first interaction
+            document.body.addEventListener('click', initializeAudio, { once: true });
+            
             musicButton.addEventListener('click', () => {
-                if (music.muted) {
-                    music.muted = false;
-                    iconMuted.classList.add('hidden');
-                    iconUnmuted.classList.remove('hidden');
-                } else {
-                    music.muted = true;
-                    iconMuted.classList.remove('hidden');
-                    iconUnmuted.classList.add('hidden');
-                }
+                initializeAudio(); // Ensure it's initialized
+                isMuted = !isMuted;
+                updateMuteButton();
             });
         });
     </script>

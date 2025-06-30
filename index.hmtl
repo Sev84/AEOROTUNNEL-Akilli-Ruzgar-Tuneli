@@ -12,6 +12,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 
+    <!-- Tone.js for background music -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -225,6 +228,16 @@
         </main>
     </div>
 
+    <!-- Music Control Button -->
+    <div id="music-control" class="fixed bottom-6 right-6 z-50">
+        <button id="muteButton" class="w-14 h-14 bg-red-700/80 hover:bg-red-600 rounded-full flex items-center justify-center text-white shadow-lg transition-transform hover:scale-110">
+            <!-- Mute Icon -->
+            <svg id="icon-muted" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-volume-x"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" x2="17" y1="9" y2="15"/><line x1="17" x2="23" y1="9" y2="15"/></svg>
+            <!-- Unmuted Icon (hidden by default) -->
+            <svg id="icon-unmuted" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-volume-2 hidden"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+        </button>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- SCROLL-BASED NAVIGATION ---
@@ -359,8 +372,53 @@
                 statusText.textContent = 'Deney Durumu: Pasif';
                 manageAirflow(false);
             });
+
+            // --- MUSIC LOGIC ---
+            const muteButton = document.getElementById('muteButton');
+            const iconMuted = document.getElementById('icon-muted');
+            const iconUnmuted = document.getElementById('icon-unmuted');
+            let isMuted = true;
+            let musicInitialized = false;
+
+            // Create a synth
+            const synth = new Tone.FMSynth({
+                harmonicity: 3.01,
+                modulationIndex: 14,
+                envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 1 },
+                modulation: { type: "triangle" },
+                modulationEnvelope: { attack: 0.01, decay: 0.5, sustain: 0.2, release: 0.1 }
+            }).toDestination();
+
+            // Create a looping sequence
+            const sequence = new Tone.Sequence((time, note) => {
+                synth.triggerAttackRelease(note, "8n", time);
+            }, ["C4", "E4", "G4", "B4", "C5", "B4", "G4", "E4"], "4n");
+
+            // Set initial state
+            Tone.Destination.mute = isMuted;
+
+            muteButton.addEventListener('click', async () => {
+                // Start audio context on first user interaction
+                if (!musicInitialized) {
+                    await Tone.start();
+                    // Start the transport and the sequence
+                    Tone.Transport.start();
+                    sequence.start(0);
+                    musicInitialized = true;
+                    console.log("Ses motoru başlatıldı.");
+                }
+
+                // Toggle mute state
+                isMuted = !isMuted;
+                Tone.Destination.mute = isMuted;
+
+                // Update icon
+                iconMuted.classList.toggle('hidden', !isMuted);
+                iconUnmuted.classList.toggle('hidden', isMuted);
+            });
         });
     </script>
 
 </body>
 </html>
+
